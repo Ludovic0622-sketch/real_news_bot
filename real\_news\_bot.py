@@ -3,16 +3,16 @@ import requests
 import feedparser
 
 # --- 🛠️ CONFIGURATION (VOS IDENTIFIANTS) ---
-# Jeton d'API de votre bot : https://t.me/RMNews247Bot
+# Jeton d'API de votre bot :
 BOT_TOKEN = '8323375048:AAH2-tspVlABm2QgxkxKGIkhlDXaQSqploA'
 
-# Identifiant de votre canal : https://t.me/REALMADRIDNEWS0001
+# Identifiant de votre canal :
 CANAL_ID = '@REALMADRIDNEWS0001'
 
-# 🌐 NOUVELLE Source d'actualités du Real Madrid (Flux RSS en FRANÇAIS, FONCTIONNEL)
+# 🌐 SOURCE DÉFINITIVE (Francophone et Fonctionnelle)
 SOURCE_RSS_URL = 'https://www.dailymercato.com/club/real-madrid-5/rss'
 
-# Fichier pour stocker les liens des articles déjà publiés (pour éviter les doublons)
+# Fichier pour stocker les liens des articles déjà publiés 
 LOG_FILE = 'published_links.txt' 
 
 # Temps d'attente entre chaque vérification (en secondes) : 5 minutes
@@ -29,34 +29,47 @@ def charger_liens_publies(fichier):
         return set()
 
 def sauvegarder_lien_publie(fichier, lien):
-    """Ajoute un nouveau lien au fichier."""
-    # Note : Dans un environnement comme Replit, ce fichier est stocké localement.
+    """Ajoute un nouveau lien au fichier log."""
     with open(fichier, 'a') as f:
         f.write(f"{lien}\n")
 
 
 def obtenir_nouvelles_via_rss():
     """
-    TEST UNIQUEMENT : Retourne un article de test pour vérifier la connexion Telegram.
-    REMETTEZ LE CODE INITIAL APRES LE TEST.
+    Se connecte au flux RSS fonctionnel, analyse et récupère les nouvelles.
     """
-    # Ce dictionnaire simule un article trouvé par le flux RSS
-    article_test = {
-        'titre': "✅ TEST RÉUSSI : Connexion Telegram OK !",
-        'texte': "Ceci est un message de test automatique. Le bot est bien administrateur et peut poster sur le canal. La publication va se lancer maintenant.", 
-        # Utiliser un lien unique pour ce test
-        'lien': 'https://test.realnewsbot.com/' + str(time.time()) 
-    }
+    print("Vérification des nouvelles sur le flux RSS francophone...")
+    nouvelles = []
     
-    # On renvoie l'article de test dans une liste
-    return [article_test]
+    try:
+        feed = feedparser.parse(SOURCE_RSS_URL)
+        
+        for entry in feed.entries:
+            titre = entry.title.replace('*', '').replace('_', '').strip()
+            
+            texte = entry.summary if 'summary' in entry else entry.get('description', 'Résumé non disponible.')
+            lien = entry.link
+            
+            cleaned_text = texte.split('<')[0].strip()
+            
+            if not lien or not titre:
+                continue
+                
+            nouvelles.append({
+                'titre': titre,
+                'texte': cleaned_text, 
+                'lien': lien
+            })
+            
+    except Exception as e:
+        print(f"Erreur lors de la lecture du flux RSS : {e}")
+        
+    return nouvelles
 
 def publier_sur_telegram(nouvelle):
     """
-    Étape 2 : Envoie le message formaté au canal Telegram.
+    Envoie le message formaté au canal Telegram.
     """
-    
-    # Construction du texte du message avec le formatage HTML pour le lien et le gras.
     
     message_texte = (
         f"⚽️ <b>{nouvelle['titre']}</b>\n\n"
@@ -64,13 +77,12 @@ def publier_sur_telegram(nouvelle):
         f"📰 <b>Source :</b> <a href=\"{nouvelle['lien']}\">Lire l'article complet</a>"
     )
     
-    # URL de l'API pour envoyer un message
     api_url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
     
     payload = {
         'chat_id': CANAL_ID,
         'text': message_texte,
-        'parse_mode': 'HTML', # Utilisation de HTML pour les balises (<b> pour le gras)
+        'parse_mode': 'HTML',
         'disable_web_page_preview': False
     }
     
@@ -91,7 +103,7 @@ def publier_sur_telegram(nouvelle):
 
 def bot_loop():
     """
-    Étape 3 : La boucle principale qui tourne 24/24.
+    La boucle principale qui tourne 24/24.
     """
     articles_publies = charger_liens_publies(LOG_FILE)
     print(f"Démarrage. {len(articles_publies)} articles déjà connus. Vérification 24/24 active.")
