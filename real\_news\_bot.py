@@ -37,38 +37,19 @@ def sauvegarder_lien_publie(fichier, lien):
 
 def obtenir_nouvelles_via_rss():
     """
-    Étape 1 : Se connecte au flux RSS FRANCOPHONE, analyse et récupère les nouvelles.
+    TEST UNIQUEMENT : Retourne un article de test pour vérifier la connexion Telegram.
+    REMETTEZ LE CODE INITIAL APRES LE TEST.
     """
-    print("Vérification des nouvelles sur le flux RSS francophone...")
-    nouvelles = []
+    # Ce dictionnaire simule un article trouvé par le flux RSS
+    article_test = {
+        'titre': "✅ TEST RÉUSSI : Connexion Telegram OK !",
+        'texte': "Ceci est un message de test automatique. Le bot est bien administrateur et peut poster sur le canal. La publication va se lancer maintenant.", 
+        # Utiliser un lien unique pour ce test
+        'lien': 'https://test.realnewsbot.com/' + str(time.time()) 
+    }
     
-    try:
-        # Utilisation de feedparser pour lire le flux RSS
-        feed = feedparser.parse(SOURCE_RSS_URL)
-        
-        for entry in feed.entries:
-            titre = entry.title.replace('*', '').replace('_', '').strip()
-            
-            # Utilisation de 'summary' ou 'description' pour le résumé
-            texte = entry.summary if 'summary' in entry else entry.get('description', 'Résumé non disponible.')
-            lien = entry.link
-            
-            # Nettoyage simple du texte (DailyMercato utilise parfois des balises)
-            cleaned_text = texte.split('<')[0].strip()
-            
-            if not lien or not titre:
-                continue
-                
-            nouvelles.append({
-                'titre': titre,
-                'texte': cleaned_text, 
-                'lien': lien
-            })
-            
-    except Exception as e:
-        print(f"Erreur lors de la lecture du flux RSS : {e}")
-        
-    return nouvelles
+    # On renvoie l'article de test dans une liste
+    return [article_test]
 
 def publier_sur_telegram(nouvelle):
     """
